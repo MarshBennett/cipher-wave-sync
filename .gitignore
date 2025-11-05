@@ -18,6 +18,10 @@ artifacts/
 cache/
 fhevmTemp/
 
+# Hardhat build metadata (can be regenerated)
+artifacts/build-info/
+deployments/*/solcInputs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
