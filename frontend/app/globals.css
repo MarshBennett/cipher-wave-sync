@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CipherWaveSync Design System - Dark cyan/teal theme */
+@layer base {
+  :root {
+    --background: 220 20% 6%;
+    --foreground: 180 10% 95%;
+
+    --card: 220 18% 8%;
+    --card-foreground: 180 10% 95%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 180 10% 95%;
+
+    --primary: 180 85% 55%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 180 10% 95%;
+
+    --muted: 220 15% 12%;
+    --muted-foreground: 180 5% 60%;
+
+    --accent: 160 70% 50%;
+    --accent-foreground: 220 20% 6%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 180 10% 95%;
+
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 180 85% 55%;
+
+    --radius: 0.75rem;
+
+    --gradient-primary: linear-gradient(135deg, hsl(180 85% 55% / 0.15), hsl(160 70% 50% / 0.1));
+    --gradient-hero: linear-gradient(180deg, hsl(220 20% 6%), hsl(220 18% 10%));
+    --gradient-card: linear-gradient(145deg, hsl(220 18% 10%), hsl(220 18% 8%));
+    
+    --shadow-glow: 0 0 40px hsl(180 85% 55% / 0.25);
+    --shadow-card: 0 8px 32px hsl(220 20% 3% / 0.5);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 220 20% 6%;
+    --foreground: 180 10% 95%;
+
+    --card: 220 18% 8%;
+    --card-foreground: 180 10% 95%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 180 10% 95%;
+
+    --primary: 180 85% 55%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 180 10% 95%;
+
+    --muted: 220 15% 12%;
+    --muted-foreground: 180 5% 60%;
+
+    --accent: 160 70% 50%;
+    --accent-foreground: 220 20% 6%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 180 10% 95%;
+
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 180 85% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .animate-waveform {
+    animation: waveform 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes waveform {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+  }
+  
+  .glow-effect {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+}
