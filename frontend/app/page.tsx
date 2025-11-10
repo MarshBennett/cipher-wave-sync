@@ -28,7 +28,6 @@ export default function Home() {
     chainId,
     accounts,
     ethersSigner,
-    ethersReadonlyProvider,
   } = useMetaMaskEthersSigner();
   const address = accounts?.[0];
   const { toast } = useToast();
@@ -95,7 +94,7 @@ export default function Home() {
       }
 
       setMessages(messagesData);
-    } catch (error) {
+    } catch {
       // Silently handle error
     } finally {
       setIsLoading(false);
@@ -198,7 +197,7 @@ export default function Home() {
         });
 
         // Wait for transaction confirmation
-        const receipt = await tx.wait();
+        await tx.wait();
       }
 
       toast({
@@ -245,7 +244,7 @@ export default function Home() {
       const signatureMessage = `Decrypt message #${messageId} from CipherWaveSync\nTimestamp: ${Date.now()}`;
       
       // This will trigger MetaMask popup for signature
-      const signature = await ethersSigner.signMessage(signatureMessage);
+      await ethersSigner.signMessage(signatureMessage);
 
       let decryptedContent: string;
 
@@ -278,7 +277,7 @@ export default function Home() {
         title: "Message Decrypted",
         description: "Successfully decrypted the message content",
       });
-    } catch (error) {
+    } catch {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === messageId ? { ...msg, isDecrypting: false } : msg
