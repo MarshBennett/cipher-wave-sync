@@ -65,16 +65,26 @@ export const useFhevm = (options: UseFhevmOptions) => {
   const [isLoading, setIsLoading] = useState(true); // Start as loading
   const [error, setError] = useState<Error | null>(null);
   const [status, setStatus] = useState<string>("idle");
-  const [initialized, setInitialized] = useState(false);
+  const [initializedChainId, setInitializedChainId] = useState<number | null>(null);
 
-  // Initialize on mount for local network
+  // Initialize on mount or when chainId changes
   useEffect(() => {
     const isLocalNetwork = chainId === 31337 || chainId === 1337;
     
-    console.log("[useFhevm] useEffect triggered, chainId:", chainId, "isLocalNetwork:", isLocalNetwork, "initialized:", initialized);
+    console.log("[useFhevm] useEffect triggered, chainId:", chainId, "isLocalNetwork:", isLocalNetwork, "initializedChainId:", initializedChainId);
     
-    if (initialized) {
+    // If already initialized for this chainId, skip
+    if (initializedChainId === chainId) {
       return;
+    }
+    
+    // Reset state when chainId changes
+    if (initializedChainId !== null && initializedChainId !== chainId) {
+      console.log("[useFhevm] ChainId changed, reinitializing...");
+      setInstance(null);
+      setIsLoading(true);
+      setError(null);
+      setStatus("idle");
     }
 
     if (isLocalNetwork) {
@@ -83,7 +93,7 @@ export const useFhevm = (options: UseFhevmOptions) => {
       setInstance(createMockFhevmInstance());
       setStatus("ready");
       setIsLoading(false);
-      setInitialized(true);
+      setInitializedChainId(chainId);
       return;
     }
 
@@ -115,7 +125,7 @@ export const useFhevm = (options: UseFhevmOptions) => {
 
         setInstance(fhevmInstance);
         setStatus("ready");
-        setInitialized(true);
+        setInitializedChainId(chainId);
       } catch (err) {
         console.error("Failed to initialize FHEVM:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
@@ -129,10 +139,10 @@ export const useFhevm = (options: UseFhevmOptions) => {
     return () => {
       abortController.abort();
     };
-  }, [chainId, publicClient, gatewayUrl, initialized]);
+  }, [chainId, publicClient, gatewayUrl, initializedChainId]);
 
   const reinit = useCallback(() => {
-    setInitialized(false);
+    setInitializedChainId(null);
     setInstance(null);
     setIsLoading(true);
   }, []);

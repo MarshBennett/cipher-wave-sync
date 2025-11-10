@@ -40,14 +40,25 @@ export class RelayerSDKLoader {
         `script[src="${SDK_CDN_URL}"]`
       );
       if (existingScript) {
-        if (!isFhevmWindowType(window, this._trace)) {
-          reject(
-            new Error(
-              "RelayerSDKLoader: window object does not contain a valid relayerSDK object."
-            )
-          );
-        }
-        resolve();
+        // Script exists, wait for SDK to be available
+        const waitForSDK = (attempts: number) => {
+          if (isFhevmWindowType(window, this._trace)) {
+            console.log("[RelayerSDKLoader] existing script, SDK ready after", 20 - attempts, "attempts");
+            resolve();
+            return;
+          }
+          if (attempts <= 0) {
+            reject(
+              new Error(
+                "RelayerSDKLoader: window object does not contain a valid relayerSDK object after waiting."
+              )
+            );
+            return;
+          }
+          console.log("[RelayerSDKLoader] existing script, waiting for SDK, attempts left:", attempts);
+          setTimeout(() => waitForSDK(attempts - 1), 100);
+        };
+        waitForSDK(20);
         return;
       }
 
@@ -58,15 +69,26 @@ export class RelayerSDKLoader {
       script.crossOrigin = "anonymous";
 
       script.onload = () => {
-        if (!isFhevmWindowType(window, this._trace)) {
-          console.log("[RelayerSDKLoader] script onload FAILED...");
-          reject(
-            new Error(
-              `RelayerSDKLoader: Relayer SDK script has been successfully loaded from ${SDK_CDN_URL}, however, the window.relayerSDK object is invalid.`
-            )
-          );
-        }
-        resolve();
+        // Wait a bit for the SDK to initialize on window
+        const checkSDK = (attempts: number) => {
+          if (isFhevmWindowType(window, this._trace)) {
+            console.log("[RelayerSDKLoader] script onload SUCCESS after", 10 - attempts, "attempts");
+            resolve();
+            return;
+          }
+          if (attempts <= 0) {
+            console.log("[RelayerSDKLoader] script onload FAILED after all attempts...");
+            reject(
+              new Error(
+                `RelayerSDKLoader: Relayer SDK script has been successfully loaded from ${SDK_CDN_URL}, however, the window.relayerSDK object is invalid.`
+              )
+            );
+            return;
+          }
+          console.log("[RelayerSDKLoader] waiting for SDK to initialize, attempts left:", attempts);
+          setTimeout(() => checkSDK(attempts - 1), 100);
+        };
+        checkSDK(10);
       };
 
       script.onerror = () => {
