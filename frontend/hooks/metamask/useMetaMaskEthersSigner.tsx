@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, Eip1193Provider } from "ethers";
 import { useMetaMask } from "./useMetaMaskProvider";
 import {
   createContext,
@@ -78,8 +78,6 @@ function useMetaMaskEthersSignerInternal(parameters: { initialMockChains?: Reado
       return;
     }
 
-    console.warn(`[useMetaMaskEthersSignerInternal] create new ethers.BrowserProvider(), chainId=${chainId}`);
-
     const bp: ethers.BrowserProvider = new ethers.BrowserProvider(provider);
     let rop: ethers.ContractRunner = bp;
     const rpcUrl: string | undefined = initialMockChains?.[chainId];
@@ -88,9 +86,10 @@ function useMetaMaskEthersSignerInternal(parameters: { initialMockChains?: Reado
       // MetaMask keeps a cache value of all view function calls. When using a dev node, this can be problematic and 
       // lead to nasty bugs. See README for more infos.
       rop = new ethers.JsonRpcProvider(rpcUrl);
-      console.warn(`[useMetaMaskEthersSignerInternal] create new readonly provider ethers.JsonRpcProvider(${rpcUrl}), chainId=${chainId}`);
     } else {
-      console.warn(`[useMetaMaskEthersSignerInternal] use ethers.BrowserProvider() as readonly provider, chainId=${chainId}`);
+      setEthersReadonlyProvider(
+        new ethers.BrowserProvider(window.ethereum as Eip1193Provider)
+      );
     }
 
     const s = new ethers.JsonRpcSigner(bp, accounts[0]);
@@ -133,10 +132,8 @@ function useMetaMaskEthersSignerInternal(parameters: { initialMockChains?: Reado
       if (privateKey) {
         const directSigner = new ethers.Wallet(privateKey, directProvider);
         setEthersDirectSigner(directSigner);
-        console.warn(`[useMetaMaskEthersSignerInternal] created direct signer for local network, address=${directSigner.address}`);
       } else {
         // Fallback: connected account is not a known Hardhat account
-        console.warn(`[useMetaMaskEthersSignerInternal] connected account ${connectedAddress} is not a known Hardhat account, direct signer not available`);
         setEthersDirectSigner(undefined);
       }
     } else {

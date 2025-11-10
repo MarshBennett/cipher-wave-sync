@@ -163,9 +163,6 @@ function useMetaMaskInternal(): UseMetaMaskState {
         if (next !== metaMaskProviderRef.current) {
           return;
         }
-        console.log(
-          `[useMetaMask] on('connect') chainId=${connectInfo.chainId}`
-        );
         // Synchronize provider and chainId
         _setCurrentProvider(next);
         _setChainId(Number.parseInt(connectInfo.chainId, 16));
@@ -177,7 +174,6 @@ function useMetaMaskInternal(): UseMetaMaskState {
         if (next !== metaMaskProviderRef.current) {
           return;
         }
-        console.log(`[useMetaMask] on('disconnect') error code=${error.code}`);
         // Synchronize provider and chainId
         _setCurrentProvider(undefined);
         _setChainId(undefined);
@@ -190,7 +186,6 @@ function useMetaMaskInternal(): UseMetaMaskState {
         if (next !== metaMaskProviderRef.current) {
           return;
         }
-        console.log(`[useMetaMask] on('chainChanged') chainId=${chainId}`);
         // Synchronize provider and chainId
         _setCurrentProvider(next);
         _setChainId(Number.parseInt(chainId, 16));
@@ -202,9 +197,6 @@ function useMetaMaskInternal(): UseMetaMaskState {
         if (next !== metaMaskProviderRef.current) {
           return;
         }
-        console.log(
-          `[useMetaMask] on('accountsChanged') accounts.length=${accounts.length}`
-        );
         _setCurrentProvider(next);
         _setAccounts(accounts);
       };
@@ -234,15 +226,10 @@ function useMetaMaskInternal(): UseMetaMaskState {
             next.request({ method: "eth_accounts" }),
           ]);
 
-          console.log(
-            `[useMetaMask] connected to chainId=${chainIdHex} accounts.length=${accountsArray.length}`
-          );
-
           _setCurrentProvider(next);
           _setChainId(Number.parseInt(chainIdHex, 16));
           _setAccounts(accountsArray);
         } catch {
-          console.log(`[useMetaMask] not connected!`);
           _setCurrentProvider(next);
           _setChainId(undefined);
           _setAccounts(undefined);

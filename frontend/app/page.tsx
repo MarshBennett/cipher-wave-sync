@@ -59,37 +59,15 @@ export default function Home() {
     !fhevmLoading &&
     !!ethersSigner;
 
-  // Debug logging
-  useEffect(() => {
-    console.log("[page.tsx] Debug state:", {
-      isConnected,
-      chainId,
-      address,
-      contractAddress,
-      fhevmInstance: !!fhevmInstance,
-      fhevmLoading,
-      isReady,
-    });
-  }, [
-    isConnected,
-    chainId,
-    address,
-    contractAddress,
-    fhevmInstance,
-    fhevmLoading,
-    isReady,
-  ]);
 
   // Load user messages
   const loadMessages = useCallback(async () => {
     // For getUserMessages(), we need a signer because it uses msg.sender
     // Always use MetaMask signer for wallet authentication
     if (!contractAddress || !ethersSigner || !address) {
-      console.log("[loadMessages] Not ready:", { contractAddress, ethersSigner: !!ethersSigner, address });
       return;
     }
 
-    console.log("[loadMessages] Loading messages for address:", address);
     setIsLoading(true);
     try {
       const contract = new ethers.Contract(
@@ -99,7 +77,6 @@ export default function Home() {
       );
 
       const messageIds = (await contract.getUserMessages()) as bigint[];
-      console.log("[loadMessages] Got message IDs:", messageIds.map(id => id.toString()));
 
       const messagesData: Message[] = [];
       for (const id of messageIds) {
@@ -119,7 +96,7 @@ export default function Home() {
 
       setMessages(messagesData);
     } catch (error) {
-      console.error("Failed to load messages:", error);
+      // Silently handle error
     } finally {
       setIsLoading(false);
     }
@@ -134,12 +111,6 @@ export default function Home() {
 
   // Submit encrypted message
   const submitMessage = async (content: string) => {
-    console.log("[submitMessage] Starting submission, content:", content);
-    console.log("[submitMessage] contractAddress:", contractAddress);
-    console.log("[submitMessage] ethersSigner:", !!ethersSigner);
-    console.log("[submitMessage] address:", address);
-    console.log("[submitMessage] isLocalNetwork:", isLocalNetwork);
-    
     if (!contractAddress || !ethersSigner || !address) {
       throw new Error("Not ready to submit");
     }
@@ -170,9 +141,7 @@ export default function Home() {
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
 
         // Call the mock function that accepts plaintext
-        console.log("[submitMessage] Calling submitMessageMock with:", { numContent: numContent.toString(), timestamp: timestamp.toString() });
         tx = await contract.submitMessageMock(numContent, timestamp);
-        console.log("[submitMessage] Transaction sent, hash:", tx.hash);
         
         // Store the plaintext content for later "decryption" (local testing only)
         // We'll get the messageId from the event after confirmation
@@ -182,7 +151,6 @@ export default function Home() {
         );
         if (messageSubmittedEvent) {
           const messageId = Number(BigInt(messageSubmittedEvent.topics[1]));
-          console.log("[submitMessage] Storing plaintext for messageId:", messageId, "content:", content);
           setLocalMessageContents(prev => ({ ...prev, [messageId]: content }));
         }
       } else {
@@ -230,9 +198,7 @@ export default function Home() {
         });
 
         // Wait for transaction confirmation
-        console.log("[submitMessage] Waiting for transaction confirmation...");
         const receipt = await tx.wait();
-        console.log("[submitMessage] Transaction confirmed, receipt:", receipt);
       }
 
       toast({
@@ -241,11 +207,8 @@ export default function Home() {
       });
 
       // Reload messages after submission
-      console.log("[submitMessage] Reloading messages...");
       await loadMessages();
-      console.log("[submitMessage] Messages reloaded");
     } catch (error) {
-      console.error("Failed to submit message:", error);
       toast({
         title: "Submission Failed",
         description: error instanceof Error ? error.message : "Failed to submit message",
@@ -280,19 +243,14 @@ export default function Home() {
       });
 
       const signatureMessage = `Decrypt message #${messageId} from CipherWaveSync\nTimestamp: ${Date.now()}`;
-      console.log("[decryptMessage] Requesting signature for message:", signatureMessage);
       
       // This will trigger MetaMask popup for signature
       const signature = await ethersSigner.signMessage(signatureMessage);
-      console.log("[decryptMessage] Got signature:", signature);
 
       let decryptedContent: string;
 
       if (isLocalNetwork) {
         // Local network: use stored plaintext value
-        console.log("[decryptMessage] Local network, looking up messageId:", messageId);
-        console.log("[decryptMessage] localMessageContents:", localMessageContents);
-        
         const storedContent = localMessageContents[messageId];
         if (storedContent) {
           decryptedContent = storedContent;
@@ -321,7 +279,6 @@ export default function Home() {
         description: "Successfully decrypted the message content",
       });
     } catch (error) {
-      console.error("[decryptMessage] Error:", error);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === messageId ? { ...msg, isDecrypting: false } : msg

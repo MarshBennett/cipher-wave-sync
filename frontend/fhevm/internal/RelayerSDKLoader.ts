@@ -18,10 +18,8 @@ export class RelayerSDKLoader {
   }
 
   public load(): Promise<void> {
-    console.log("[RelayerSDKLoader] load...");
     // Ensure this only runs in the browser
     if (typeof window === "undefined") {
-      console.log("[RelayerSDKLoader] window === undefined");
       return Promise.reject(
         new Error("RelayerSDKLoader: can only be used in the browser.")
       );
@@ -29,7 +27,6 @@ export class RelayerSDKLoader {
 
     if ("relayerSDK" in window) {
       if (!isFhevmRelayerSDKType(window.relayerSDK, this._trace)) {
-        console.log("[RelayerSDKLoader] window.relayerSDK === undefined");
         throw new Error("RelayerSDKLoader: Unable to load FHEVM Relayer SDK");
       }
       return Promise.resolve();
@@ -43,7 +40,6 @@ export class RelayerSDKLoader {
         // Script exists, wait for SDK to be available
         const waitForSDK = (attempts: number) => {
           if (isFhevmWindowType(window, this._trace)) {
-            console.log("[RelayerSDKLoader] existing script, SDK ready after", 20 - attempts, "attempts");
             resolve();
             return;
           }
@@ -55,7 +51,6 @@ export class RelayerSDKLoader {
             );
             return;
           }
-          console.log("[RelayerSDKLoader] existing script, waiting for SDK, attempts left:", attempts);
           setTimeout(() => waitForSDK(attempts - 1), 100);
         };
         waitForSDK(20);
@@ -72,12 +67,10 @@ export class RelayerSDKLoader {
         // Wait a bit for the SDK to initialize on window
         const checkSDK = (attempts: number) => {
           if (isFhevmWindowType(window, this._trace)) {
-            console.log("[RelayerSDKLoader] script onload SUCCESS after", 10 - attempts, "attempts");
             resolve();
             return;
           }
           if (attempts <= 0) {
-            console.log("[RelayerSDKLoader] script onload FAILED after all attempts...");
             reject(
               new Error(
                 `RelayerSDKLoader: Relayer SDK script has been successfully loaded from ${SDK_CDN_URL}, however, the window.relayerSDK object is invalid.`
@@ -85,14 +78,12 @@ export class RelayerSDKLoader {
             );
             return;
           }
-          console.log("[RelayerSDKLoader] waiting for SDK to initialize, attempts left:", attempts);
           setTimeout(() => checkSDK(attempts - 1), 100);
         };
         checkSDK(10);
       };
 
       script.onerror = () => {
-        console.log("[RelayerSDKLoader] script onerror... ");
         reject(
           new Error(
             `RelayerSDKLoader: Failed to load Relayer SDK from ${SDK_CDN_URL}`
@@ -100,9 +91,7 @@ export class RelayerSDKLoader {
         );
       };
 
-      console.log("[RelayerSDKLoader] add script to DOM...");
       document.head.appendChild(script);
-      console.log("[RelayerSDKLoader] script added!")
     });
   }
 }

@@ -71,8 +71,6 @@ export const useFhevm = (options: UseFhevmOptions) => {
   useEffect(() => {
     const isLocalNetwork = chainId === 31337 || chainId === 1337;
     
-    console.log("[useFhevm] useEffect triggered, chainId:", chainId, "isLocalNetwork:", isLocalNetwork, "initializedChainId:", initializedChainId);
-    
     // If already initialized for this chainId, skip
     if (initializedChainId === chainId) {
       return;
@@ -80,7 +78,6 @@ export const useFhevm = (options: UseFhevmOptions) => {
     
     // Reset state when chainId changes
     if (initializedChainId !== null && initializedChainId !== chainId) {
-      console.log("[useFhevm] ChainId changed, reinitializing...");
       setInstance(null);
       setIsLoading(true);
       setError(null);
@@ -89,7 +86,6 @@ export const useFhevm = (options: UseFhevmOptions) => {
 
     if (isLocalNetwork) {
       // Use mock instance for local network immediately
-      console.log("[useFhevm] Using mock FHEVM instance for local network");
       setInstance(createMockFhevmInstance());
       setStatus("ready");
       setIsLoading(false);
@@ -99,14 +95,12 @@ export const useFhevm = (options: UseFhevmOptions) => {
 
     // For non-local networks, wait for publicClient
     if (!publicClient) {
-      console.log("[useFhevm] Waiting for publicClient...");
       return;
     }
 
     const abortController = new AbortController();
     
     const initInstance = async () => {
-      console.log("[useFhevm] initInstance called for non-local network");
       setIsLoading(true);
       setError(null);
 
@@ -127,7 +121,6 @@ export const useFhevm = (options: UseFhevmOptions) => {
         setStatus("ready");
         setInitializedChainId(chainId);
       } catch (err) {
-        console.error("Failed to initialize FHEVM:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setIsLoading(false);
