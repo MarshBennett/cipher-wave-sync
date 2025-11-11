@@ -6,9 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: "CipherWaveSync - Encrypted Message System",
   description: "Submit and manage encrypted messages on-chain using FHEVM technology",
-  icons: {
-    icon: "/icon.png",
-  },
 };
 
 export default async function RootLayout({
