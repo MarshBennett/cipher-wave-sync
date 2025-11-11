@@ -94,8 +94,12 @@ export default function Home() {
       }
 
       setMessages(messagesData);
-    } catch {
-      // Silently handle error
+    } catch (error) {
+      toast({
+        title: "Failed to Load Messages",
+        description: error instanceof Error ? error.message : "Unable to fetch messages from contract",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -277,7 +281,7 @@ export default function Home() {
         title: "Message Decrypted",
         description: "Successfully decrypted the message content",
       });
-    } catch {
+    } catch (error) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === messageId ? { ...msg, isDecrypting: false } : msg
@@ -285,7 +289,7 @@ export default function Home() {
       );
       toast({
         title: "Decryption Failed",
-        description: "Failed to decrypt the message",
+        description: error instanceof Error ? error.message : "Failed to decrypt the message",
         variant: "destructive",
       });
     }
