@@ -44,7 +44,10 @@ contract EncryptedMessages is ZamaEthereumConfig {
         euint64 content = FHE.fromExternal(encryptedContent, inputProof);
         euint32 timestamp = FHE.fromExternal(encryptedTimestamp, inputProof);
 
-        uint256 messageId = _totalMessages++;
+        uint256 messageId = _totalMessages;
+        unchecked {
+            _totalMessages = messageId + 1;
+        }
 
         _messages[messageId] = Message({
             sender: msg.sender,
