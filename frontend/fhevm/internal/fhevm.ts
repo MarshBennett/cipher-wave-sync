@@ -28,21 +28,21 @@ function throwFhevmError(
 }
 
 const isFhevmInitialized = (): boolean => {
-  if (!isFhevmWindowType(window, console.log)) {
+  if (!isFhevmWindowType(window)) {
     return false;
   }
   return window.relayerSDK.__initialized__ === true;
 };
 
 const fhevmLoadSDK: FhevmLoadSDKType = () => {
-  const loader = new RelayerSDKLoader({ trace: console.log });
+  const loader = new RelayerSDKLoader({});
   return loader.load();
 };
 
 const fhevmInitSDK: FhevmInitSDKType = async (
   options?: FhevmInitSDKOptions
 ) => {
-  if (!isFhevmWindowType(window, console.log)) {
+  if (!isFhevmWindowType(window)) {
     throw new Error("window.relayerSDK is not available");
   }
   const result = await window.relayerSDK.initSDK(options);
@@ -114,15 +114,12 @@ export const createFhevmInstance = async (
 
   if (isLocalNetwork) {
     // For local networks, use a simpler approach
-    // You might want to implement mock functionality here
-    console.warn(
-      "Local network detected. FHEVM SDK functionality may be limited."
-    );
+    // Local network FHEVM SDK functionality may be limited
   }
 
   throwIfAborted();
 
-  if (!isFhevmWindowType(window, console.log)) {
+  if (!isFhevmWindowType(window)) {
     notify("sdk-loading");
 
     // throws an error if failed

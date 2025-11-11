@@ -49,7 +49,6 @@ class FhevmDecryptionSignatureStorageKey {
 
       this.#key = `${userAddress}:${hash}`;
     } catch (e) {
-      console.log(e);
       throw e;
     }
   }
@@ -230,13 +229,8 @@ export class FhevmDecryptionSignature {
         withPublicKey ? this.#publicKey : undefined
       );
       await storage.setItem(storageKey.key, value);
-      console.log(
-        `signature saved! contracts=${this.#contractAddresses.length}`
-      );
     } catch {
-      console.error(
-        `FhevmDecryptionSignature.saveToGenericStringStorage() failed!`
-      );
+      // Silently handle storage errors
     }
   }
 
