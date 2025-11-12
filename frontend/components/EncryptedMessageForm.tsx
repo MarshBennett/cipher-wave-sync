@@ -97,8 +97,11 @@ const EncryptedMessageForm = ({ onSubmit, isReady, isConnected }: EncryptedMessa
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             className="mt-2"
+            disabled={isSubmitting || !isConnected || !isReady}
+            aria-describedby="message-hint"
+            aria-required="true"
           />
-          <p className="text-xs text-muted-foreground mt-1">
+          <p id="message-hint" className="text-xs text-muted-foreground mt-1">
             Enter a positive integer that will be encrypted using FHE
           </p>
         </div>
@@ -107,8 +110,9 @@ const EncryptedMessageForm = ({ onSubmit, isReady, isConnected }: EncryptedMessa
           type="submit"
           className="w-full gap-2"
           disabled={isSubmitting || !isConnected || !isReady}
+          aria-label={isSubmitting ? "Submitting encrypted message" : "Submit encrypted message"}
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-4 w-4" aria-hidden="true" />
           {isSubmitting ? "Encrypting & Submitting..." : "Submit Encrypted Message"}
         </Button>
 
