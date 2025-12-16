@@ -4,8 +4,9 @@ import Header from "@/components/Header";
 import EncryptedMessageForm from "@/components/EncryptedMessageForm";
 import MessageList from "@/components/MessageList";
 import WaveformVisualizer from "@/components/WaveformVisualizer";
+import BackgroundParticles from "@/components/BackgroundParticles";
 import { Card } from "@/components/ui/card";
-import { Lock, Shield, Key } from "lucide-react";
+import { Lock, Shield, Key, Sparkles, Zap } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { useToast } from "@/hooks/use-toast";
@@ -103,7 +104,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [contractAddress, ethersSigner, address]);
+  }, [contractAddress, ethersSigner, address, toast]);
 
   // Load messages when connected
   useEffect(() => {
@@ -157,7 +158,11 @@ export default function Home() {
           setLocalMessageContents(prev => ({ ...prev, [messageId]: content }));
         }
       } else {
-        // Production network: use real FHE encryption
+        // Production network: check FHEVM availability
+        if (!fhevmInstance) {
+          throw new Error("FHEVM is not available on this network. Please use a supported FHEVM network or switch to local development.");
+        }
+
         toast({
           title: "Encrypting Message",
           description: "Creating encrypted inputs...",
@@ -166,31 +171,37 @@ export default function Home() {
         const numContent = BigInt(content);
         const timestamp = BigInt(Math.floor(Date.now() / 1000));
 
-        // Create encrypted inputs using FHEVM
-        const input = fhevmInstance!.createEncryptedInput(
-          contractAddress,
-          address
-        );
-        input.add64(numContent);
-        input.add32(Number(timestamp));
-        const encrypted = await input.encrypt();
+        try {
+          // Create encrypted inputs using FHEVM
+          const input = fhevmInstance.createEncryptedInput(
+            contractAddress,
+            address
+          );
+          input.add64(numContent);
+          input.add32(Number(timestamp));
+          const encrypted = await input.encrypt();
 
-        // Convert handles and proof to hex strings if they are Uint8Array
-        const toHex = (data: Uint8Array | `0x${string}`): `0x${string}` => {
-          if (typeof data === "string") return data;
-          return ("0x" + Array.from(data).map(b => b.toString(16).padStart(2, "0")).join("")) as `0x${string}`;
-        };
+          // Convert handles and proof to hex strings if they are Uint8Array
+          const toHex = (data: Uint8Array | `0x${string}`): `0x${string}` => {
+            if (typeof data === "string") return data;
+            return ("0x" + Array.from(data).map(b => b.toString(16).padStart(2, "0")).join("")) as `0x${string}`;
+          };
 
-        const handle0 = toHex(encrypted.handles[0]);
-        const handle1 = toHex(encrypted.handles[1]);
-        const inputProof = toHex(encrypted.inputProof);
+          const handle0 = toHex(encrypted.handles[0]);
+          const handle1 = toHex(encrypted.handles[1]);
+          const inputProof = toHex(encrypted.inputProof);
 
-        toast({
-          title: "Submitting Transaction",
-          description: "Please confirm in your wallet...",
-        });
+          toast({
+            title: "Submitting Transaction",
+            description: "Please confirm in your wallet...",
+          });
 
-        tx = await contract.submitMessage(handle0, handle1, inputProof);
+          tx = await contract.submitMessage(handle0, handle1, inputProof);
+        } catch (fhevmError: unknown) {
+          console.error("FHEVM encryption failed:", fhevmError);
+          const errorMessage = fhevmError instanceof Error ? fhevmError.message : "Unknown FHEVM error";
+          throw new Error(`FHEVM encryption failed: ${errorMessage}. Make sure you're connected to a supported FHEVM network.`);
+        }
       }
 
       // For non-local network, wait for confirmation here
@@ -296,92 +307,121 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <BackgroundParticles />
+      
+      {/* Animated gradient orbs */}
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "0s" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-float" style={{ animationDelay: "4s" }} />
+      </div>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="container mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
-            <Lock className="h-4 w-4 text-primary" />
-            <span className="text-sm text-primary font-medium">
-              Fully Homomorphic Encryption
-            </span>
-          </div>
+      <div className="relative z-10">
+        <Header />
 
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">CipherWaveSync</h1>
-
-          <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Submit and manage encrypted messages on-chain using FHEVM technology.
-            Your data remains private, even during computation.
-          </p>
-
-          {/* Waveform Visualizer */}
-          <div className="max-w-2xl mx-auto mb-12">
-            <WaveformVisualizer />
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
-            <Card className="p-6 border-border/50">
-              <Lock className="h-10 w-10 text-primary mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Encrypted Storage</h3>
-              <p className="text-sm text-muted-foreground">
-                Messages are encrypted on-chain using FHE
-              </p>
-            </Card>
-
-            <Card className="p-6 border-border/50">
-              <Shield className="h-10 w-10 text-primary mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Private Processing</h3>
-              <p className="text-sm text-muted-foreground">
-                Compute on encrypted data without decryption
-              </p>
-            </Card>
-
-            <Card className="p-6 border-border/50">
-              <Key className="h-10 w-10 text-primary mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Controlled Access</h3>
-              <p className="text-sm text-muted-foreground">
-                Only you can decrypt your messages
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="pb-20 px-6">
-        <div className="container mx-auto max-w-4xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Submit Message */}
-            <div>
-              <EncryptedMessageForm
-                onSubmit={submitMessage}
-                isReady={isReady}
-                isConnected={isConnected}
-              />
+        {/* Hero Section */}
+        <section className="pt-32 pb-16 px-6 relative">
+          <div className="container mx-auto text-center relative z-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8 animate-scale-in backdrop-blur-sm">
+              <Lock className="h-4 w-4 text-primary animate-pulse" />
+              <span className="text-sm text-primary font-medium">
+                Fully Homomorphic Encryption
+              </span>
+              <Sparkles className="h-3 w-3 text-primary animate-pulse" />
             </div>
 
-            {/* View Messages */}
-            <div>
-              <div className="mb-4">
-                <h2 className="text-2xl font-bold mb-2">Your Messages</h2>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-slide-in-up text-gradient">
+              CipherWaveSync
+            </h1>
+
+            <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto animate-slide-in-up" style={{ animationDelay: "0.1s" }}>
+              Submit and manage encrypted messages on-chain using FHEVM technology.
+              Your data remains private, even during computation.
+            </p>
+
+            {/* Waveform Visualizer */}
+            <div className="max-w-2xl mx-auto mb-12 animate-slide-in-up" style={{ animationDelay: "0.2s" }}>
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl animate-pulse-glow" />
+                <div className="relative bg-card/50 backdrop-blur-sm border border-primary/20 rounded-2xl p-8 glow-effect-hover">
+                  <WaveformVisualizer />
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
+              <Card className="p-6 border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 animate-scale-in group cursor-pointer" style={{ animationDelay: "0.3s" }}>
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:opacity-100 opacity-0 transition-opacity" />
+                  <Lock className="h-10 w-10 text-primary mx-auto relative z-10 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Encrypted Storage</h3>
                 <p className="text-sm text-muted-foreground">
+                  Messages are encrypted on-chain using FHE
+                </p>
+              </Card>
+
+              <Card className="p-6 border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 animate-scale-in group cursor-pointer" style={{ animationDelay: "0.4s" }}>
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:opacity-100 opacity-0 transition-opacity" />
+                  <Shield className="h-10 w-10 text-primary mx-auto relative z-10 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Private Processing</h3>
+                <p className="text-sm text-muted-foreground">
+                  Compute on encrypted data without decryption
+                </p>
+              </Card>
+
+              <Card className="p-6 border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 animate-scale-in group cursor-pointer" style={{ animationDelay: "0.5s" }}>
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:opacity-100 transition-opacity" />
+                  <Key className="h-10 w-10 text-primary mx-auto relative z-10 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Controlled Access</h3>
+                <p className="text-sm text-muted-foreground">
+                  Only you can decrypt your messages
+                </p>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Main Content */}
+        <section className="pb-20 px-6 relative z-10">
+          <div className="container mx-auto max-w-4xl">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Submit Message */}
+              <div className="animate-slide-in-up" style={{ animationDelay: "0.6s" }}>
+                <EncryptedMessageForm
+                  onSubmit={submitMessage}
+                  isReady={isReady}
+                  isConnected={isConnected}
+                />
+              </div>
+
+              {/* View Messages */}
+              <div className="animate-slide-in-up" style={{ animationDelay: "0.7s" }}>
+                <div className="mb-4 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-primary animate-pulse" />
+                  <h2 className="text-2xl font-bold">Your Messages</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
                   {isLoading
                     ? "Loading..."
                     : `${messages.length} message(s) stored`}
                 </p>
+                <MessageList
+                  messages={messages}
+                  onDecrypt={decryptMessage}
+                  isLoading={isLoading}
+                />
               </div>
-              <MessageList
-                messages={messages}
-                onDecrypt={decryptMessage}
-                isLoading={isLoading}
-              />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

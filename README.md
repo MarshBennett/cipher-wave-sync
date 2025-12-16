@@ -5,7 +5,7 @@
   
   **A decentralized encrypted messaging platform powered by FHEVM technology**
   
-  [🚀 Live Demo](https://cipher-wave-sync.vercel.app/) | [📖 Documentation](https://docs.zama.ai/fhevm)
+  [🚀 Live Demo](https://cipher-wave-two.vercel.app/) | [📖 Documentation](https://docs.zama.ai/fhevm)
 </div>
 
 ## 🌟 Overview

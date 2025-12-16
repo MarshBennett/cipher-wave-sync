@@ -77,15 +77,32 @@ function readDeployment(chainName, chainId, contractName, optional) {
     return undefined;
   }
 
-  const jsonString = fs.readFileSync(
-    path.join(chainDeploymentDir, `${contractName}.json`),
-    "utf-8"
-  );
+  const deploymentFile = path.join(chainDeploymentDir, `${contractName}.json`);
+  
+  if (!fs.existsSync(deploymentFile)) {
+    const errorMsg = `${line}Unable to locate '${deploymentFile}' file.\n\n1. Goto '${dirname}' directory\n2. Run 'npx hardhat deploy --network ${chainName}'.${line}`;
+    if (!optional) {
+      console.error(errorMsg);
+      process.exit(1);
+    }
+    console.warn(errorMsg);
+    return undefined;
+  }
 
-  const obj = JSON.parse(jsonString);
-  obj.chainId = chainId;
-
-  return obj;
+  try {
+    const jsonString = fs.readFileSync(deploymentFile, "utf-8");
+    const obj = JSON.parse(jsonString);
+    obj.chainId = chainId;
+    return obj;
+  } catch (error) {
+    const errorMsg = `${line}Error reading or parsing '${deploymentFile}': ${error.message}\n\n1. Goto '${dirname}' directory\n2. Run 'npx hardhat deploy --network ${chainName}'.${line}`;
+    if (!optional) {
+      console.error(errorMsg);
+      process.exit(1);
+    }
+    console.warn(errorMsg);
+    return undefined;
+  }
 }
 
 // Process each contract
